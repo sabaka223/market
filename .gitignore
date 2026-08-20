@@ -2,23 +2,50 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment
 .env
+.env.local
+*.env.*
 
-# Build artifacts
+# Logs
 *.log
-*.tmp
-*.swp
 
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Package manager
-package-lock.json
-
-# IDE
+# Editor/IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*.tmp
 
+# Build artifacts
+dist/
+build/
+target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+
+# OS
+.DS_Store
+Thumbs.db
 ```
