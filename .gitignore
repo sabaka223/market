@@ -1,0 +1,24 @@
+```
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Build artifacts
+*.log
+*.tmp
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Package manager
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+
+```

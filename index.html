@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KidsStyle - Магазин детской одежды</title>
+    <!-- Chart.js для графиков -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Иконки -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF9A9E;
+            --secondary: #FECFEF;
+            --accent: #a18cd1;
+            --dark: #333;
+            --light: #f9f9f9;
+            --white: #fff;
+            --success: #4caf50;
+            --danger: #f44336;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--light); color: var(--dark); padding-bottom: 50px; }
+        
+        /* Layout & Navigation */
+        header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: var(--white); padding: 1rem 2rem; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; cursor: pointer; }
+        nav ul { display: flex; list-style: none; gap: 20px; }
+        nav a { color: var(--white); text-decoration: none; font-weight: 500; cursor: pointer; transition: 0.3s; }
+        nav a:hover { opacity: 0.8; }
+        .cart-icon { position: relative; cursor: pointer; }
+        .cart-badge { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; }
+
+        /* Container */
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        
+        /* Views */
+        .view { display: none; animation: fadeIn 0.5s; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Shop Grid */
+        .filters { background: var(--white); padding: 1.5rem; border-radius: 10px; box-shadow: var(--shadow); margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+        .filters input, .filters select { padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; flex: 1; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; }
+        .product-card { background: var(--white); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); transition: transform 0.3s; display: flex; flex-direction: column; }
+        .product-card:hover { transform: translateY(-5px); }
+        .product-img { height: 200px; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 3rem; }
+        .product-info { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
+        .product-title { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .product-price { font-weight: bold; color: var(--primary); font-size: 1.2rem; margin-top: auto; }
+        .btn { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 1rem; transition: 0.3s; }
+        .btn:hover { background: var(--accent); }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); }
+
+        /* Cart & Forms */
+        .cart-modal, .auth-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: var(--white); padding: 2rem; border-radius: 10px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .close-modal { position: absolute; top: 1rem; right: 1rem; cursor: pointer; font-size: 1.5rem; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 0.5rem 0; }
+        
+        /* Admin Dashboard */
+        .admin-layout { display: grid; grid-template-columns: 250px 1fr; gap: 2rem; min-height: 80vh; }
+        .admin-sidebar { background: var(--white); padding: 1rem; border-radius: 10px; box-shadow: var(--shadow); height: fit-content; }
+        .admin-sidebar button { display: block; width: 100%; text-align: left; padding: 10px; margin-bottom: 5px; background: none; border: none; cursor: pointer; border-radius: 5px; }
+        .admin-sidebar button.active { background: var(--secondary); color: var(--dark); font-weight: bold; }
+        .admin-content { background: var(--white); padding: 2rem; border-radius: 10px; box-shadow: var(--shadow); }
+        
+        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--light); padding: 1.5rem; border-radius: 10px; text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
+        
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .chart-box { background: var(--light); padding: 1rem; border-radius: 10px; height: 300px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: var(--light); }
+        
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; }
+
+        /* Notification */
+        .notification { position: fixed; bottom: 20px; right: 20px; background: var(--dark); color: white; padding: 1rem 2rem; border-radius: 5px; transform: translateY(100px); transition: 0.3s; z-index: 3000; }
+        .notification.show { transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="logo" onclick="app.navigate('shop')"><i class="fas fa-baby-carriage"></i> KidsStyle</div>
+        <nav>
+            <ul>
+                <li><a onclick="app.navigate('shop')">Магазин</a></li>
+                <li id="auth-link"><a onclick="app.navigate('login')">Войти</a></li>
+                <li id="admin-link" style="display:none;"><a onclick="app.navigate('admin')">Админка</a></li>
+                <li class="cart-icon" onclick="app.toggleCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- SHOP VIEW -->
+        <div id="view-shop" class="view active">
+            <div class="filters">
+                <input type="text" id="search-input" placeholder="Поиск одежды..." oninput="app.renderProducts()">
+                <select id="category-filter" onchange="app.renderProducts()">
+                    <option value="">Все категории</option>
+                    <option value="boys">Для мальчиков</option>
+                    <option value="girls">Для девочек</option>
+                    <option value="infants">Для младенцев</option>
+                </select>
+                <select id="sort-filter" onchange="app.renderProducts()">
+                    <option value="default">По умолчанию</option>
+                    <option value="price-asc">Цена: по возрастанию</option>
+                    <option value="price-desc">Цена: по убыванию</option>
+                </select>
+            </div>
+            <div class="products-grid" id="products-container">
+                <!-- Products injected here -->
+            </div>
+        </div>
+
+        <!-- LOGIN VIEW -->
+        <div id="view-login" class="view">
+            <div class="modal-content" style="margin: 0 auto; max-width: 400px;">
+                <h2>Вход / Регистрация</h2>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" value="admin@kids.com">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="login-pass" value="admin">
+                </div>
+                <button class="btn" onclick="app.login()">Войти</button>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">Для админа: admin@kids.com / admin</p>
+            </div>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div id="view-admin" class="view">
+            <div class="admin-layout">
+                <aside class="admin-sidebar">
+                    <button onclick="app.renderAdminTab('dashboard')" class="active" id="btn-tab-dashboard">Дэшборд</button>
+                    <button onclick="app.renderAdminTab('orders')" id="btn-tab-orders">Заказы</button>
+                    <button onclick="app.renderAdminTab('clients')" id="btn-tab-clients">Клиенты</button>
+                    <button onclick="app.renderAdminTab('products')" id="btn-tab-products">Товары</button>
+                    <button onclick="app.renderAdminTab('finance')" id="btn-tab-finance">Финансы</button>
+                    <button onclick="app.logout()" style="color: var(--danger); margin-top: 20px;">Выйти</button>
+                </aside>
+                <main class="admin-content" id="admin-panel-content">
+                    <!-- Dynamic Content -->
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="cart-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="app.toggleCart()">&times;</span>
+            <h2>Корзина</h2>
+            <div id="cart-items"></div>
+            <div style="margin-top: 1rem; text-align: right; font-weight: bold;">
+                Итого: <span id="cart-total">0</span> ₽
+            </div>
+            <button class="btn" onclick="app.checkout()">Оформить заказ</button>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="cart-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('checkout-modal').style.display='none'">&times;</span>
+            <h2>Оформление заказа</h2>
+            <div class="form-group"><label>Имя</label><input type="text" id="order-name"></div>
+            <div class="form-group"><label>Телефон</label><input type="tel" id="order-phone"></div>
+            <div class="form-group"><label>Адрес</label><textarea id="order-address"></textarea></div>
+            <button class="btn" onclick="app.submitOrder()">Подтвердить</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">Сообщение</div>
+
+    <script>
+        // --- DATA & STATE MANAGEMENT ---
+        const DB = {
+            init() {
+                if (!localStorage.getItem('ks_products')) {
+                    const initialProducts = [
+                        { id: 1, name: 'Комбинезон "Мишка"', price: 2500, category: 'infants', image: 'fa-tshirt' },
+                        { id: 2, name: 'Платье "Принцесса"', price: 3200, category: 'girls', image: 'fa-female' },
+                        { id: 3, name: 'Костюм "Супергерой"', price: 2800, category: 'boys', image: 'fa-male' },
+                        { id: 4, name: 'Боди хлопковое', price: 1200, category: 'infants', image: 'fa-baby' },
+                        { id: 5, name: 'Джинсы детские', price: 1800, category: 'boys', image: 'fa-user-astronaut' },
+                        { id: 6, name: 'Юбка пышная', price: 1500, category: 'girls', image: 'fa-star' },
+                    ];
+                    localStorage.setItem('ks_products', JSON.stringify(initialProducts));
+                }
+                if (!localStorage.getItem('ks_orders')) localStorage.setItem('ks_orders', JSON.stringify([]));
+                if (!localStorage.getItem('ks_users')) localStorage.setItem('ks_users', JSON.stringify([]));
+                if (!localStorage.getItem('ks_expenses')) localStorage.setItem('ks_expenses', JSON.stringify([]));
+                if (!localStorage.getItem('ks_taxRate')) localStorage.setItem('ks_taxRate', JSON.stringify(6)); // 6% USN default
+            },
+            get(key) { return JSON.parse(localStorage.getItem(key)); },
+            set(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+        };
+
+        const app = {
+            state: {
+                cart: [],
+                user: null, // { email, role: 'admin' | 'client' }
+                products: DB.get('ks_products'),
+                orders: DB.get('ks_orders'),
+                expenses: DB.get('ks_expenses'),
+                taxRate: DB.get('ks_taxRate')
+            },
+
+            init() {
+                DB.init();
+                this.renderProducts();
+                this.updateCartUI();
+                
+                // Check session
+                const savedUser = sessionStorage.getItem('ks_user');
+                if (savedUser) {
+                    this.state.user = JSON.parse(savedUser);
+                    this.updateAuthUI();
+                }
+            },
+
+            navigate(viewId) {
+                document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+                document.getElementById(`view-${viewId}`).classList.add('active');
+                window.scrollTo(0,0);
+                
+                if (viewId === 'admin' && (!this.state.user || this.state.user.role !== 'admin')) {
+                    this.notify('Доступ запрещен', 'error');
+                    this.navigate('login');
+                    return;
+                }
+                if (viewId === 'admin') this.renderAdminTab('dashboard');
+            },
+
+            // --- SHOP LOGIC ---
+            renderProducts() {
+                const search = document.getElementById('search-input').value.toLowerCase();
+                const cat = document.getElementById('category-filter').value;
+                const sort = document.getElementById('sort-filter').value;
+
+                let filtered = this.state.products.filter(p => 
+                    p.name.toLowerCase().includes(search) && 
+                    (cat === '' || p.category === cat)
+                );
+
+                if (sort === 'price-asc') filtered.sort((a,b) => a.price - b.price);
+                if (sort === 'price-desc') filtered.sort((a,b) => b.price - a.price);
+
+                const container = document.getElementById('products-container');
+                container.innerHTML = filtered.map(p => `
+                    <div class="product-card">
+                        <div class="product-img"><i class="fas ${p.image}"></i></div>
+                        <div class="product-info">
+                            <div class="product-title">${p.name}</div>
+                            <div class="product-price">${p.price} ₽</div>
+                            <button class="btn" onclick="app.addToCart(${p.id})">В корзину</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            addToCart(id) {
+                const product = this.state.products.find(p => p.id === id);
+                const existing = this.state.cart.find(item => item.id === id);
+                if (existing) existing.qty++;
+                else this.state.cart.push({ ...product, qty: 1 });
+                
+                this.updateCartUI();
+                this.notify('Товар добавлен в корзину');
+            },
+
+            updateCartUI() {
+                const count = this.state.cart.reduce((sum, item) => sum + item.qty, 0);
+                document.getElementById('cart-count').innerText = count;
+                
+                const cartItems = document.getElementById('cart-items');
+                let total = 0;
+                cartItems.innerHTML = this.state.cart.map((item, idx) => {
+                    total += item.price * item.qty;
+                    return `
+                    <div class="cart-item">
+                        <div>${item.name} x${item.qty}</div>
+                        <div>
+                            <b>${item.price * item.qty} ₽</b>
+                            <i class="fas fa-trash" style="color:red; cursor:pointer; margin-left:10px;" onclick="app.removeFromCart(${idx})"></i>
+                        </div>
+                    </div>`;
+                }).join('');
+                document.getElementById('cart-total').innerText = total;
+            },
+
+            removeFromCart(index) {
+                this.state.cart.splice(index, 1);
+                this.updateCartUI();
+            },
+
+            toggleCart() {
+                const modal = document.getElementById('cart-modal');
+                modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+            },
+
+            checkout() {
+                if (this.state.cart.length === 0) return this.notify('Корзина пуста', 'error');
+                document.getElementById('cart-modal').style.display = 'none';
+                document.getElementById('checkout-modal').style.display = 'flex';
+            },
+
+            submitOrder() {
+                const name = document.getElementById('order-name').value;
+                const phone = document.getElementById('order-phone').value;
+                const address = document.getElementById('order-address').value;
+
+                if (!name || !phone) return this.notify('Заполните имя и телефон', 'error');
+
+                const total = this.state.cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+                const order = {
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    customer: { name, phone, address, email: this.state.user ? this.state.user.email : 'Гость' },
+                    items: [...this.state.cart],
+                    total: total,
+                    status: 'Новый'
+                };
+
+                this.state.orders.unshift(order);
+                DB.set('ks_orders', this.state.orders);
+                
+                // Add user if guest
+                if (!this.state.user) {
+                    const users = DB.get('ks_users');
+                    if(!users.find(u => u.phone === phone)) {
+                        users.push({ email: 'guest_'+phone, phone, name, role: 'client' });
+                        DB.set('ks_users', users);
+                    }
+                }
+
+                this.state.cart = [];
+                this.updateCartUI();
+                document.getElementById('checkout-modal').style.display = 'none';
+                this.notify('Заказ успешно оформлен!');
+                this.navigate('shop');
+            },
+
+            // --- AUTH LOGIC ---
+            login() {
+                const email = document.getElementById('login-email').value;
+                const pass = document.getElementById('login-pass').value;
+
+                if (email === 'admin@kids.com' && pass === 'admin') {
+                    this.state.user = { email, role: 'admin' };
+                } else {
+                    // Simple mock registration/login for clients
+                    let users = DB.get('ks_users');
+                    let user = users.find(u => u.email === email);
+                    if (!user) {
+                        user = { email, role: 'client' };
+                        users.push(user);
+                        DB.set('ks_users', users);
+                    }
+                    this.state.user = user;
+                }
+
+                sessionStorage.setItem('ks_user', JSON.stringify(this.state.user));
+                this.updateAuthUI();
+                this.notify('Вы вошли в систему');
+                
+                if (this.state.user.role === 'admin') this.navigate('admin');
+                else this.navigate('shop');
+            },
+
+            logout() {
+                this.state.user = null;
+                sessionStorage.removeItem('ks_user');
+                this.updateAuthUI();
+                this.navigate('shop');
+                this.notify('Вы вышли');
+            },
+
+            updateAuthUI() {
+                const authLink = document.getElementById('auth-link');
+                const adminLink = document.getElementById('admin-link');
+                
+                if (this.state.user) {
+                    authLink.innerHTML = `<a onclick="app.logout()">Выйти (${this.state.user.email})</a>`;
+                    if (this.state.user.role === 'admin') adminLink.style.display = 'block';
+                    else adminLink.style.display = 'none';
+                } else {
+                    authLink.innerHTML = `<a onclick="app.navigate('login')">Войти</a>`;
+                    adminLink.style.display = 'none';
+                }
+            },
+
+            notify(msg, type = 'success') {
+                const el = document.getElementById('notification');
+                el.innerText = msg;
+                el.style.background = type === 'error' ? 'var(--danger)' : 'var(--dark)';
+                el.classList.add('show');
+                setTimeout(() => el.classList.remove('show'), 3000);
+            },
+
+            // --- ADMIN PANEL LOGIC ---
+            renderAdminTab(tab) {
+                // Update sidebar active state
+                document.querySelectorAll('.admin-sidebar button').forEach(b => b.classList.remove('active'));
+                const btn = document.getElementById(`btn-tab-${tab}`);
+                if(btn) btn.classList.add('active');
+
+                const content = document.getElementById('admin-panel-content');
+                let html = '';
+
+                if (tab === 'dashboard') {
+                    const totalRevenue = this.state.orders.reduce((sum, o) => sum + o.total, 0);
+                    const totalOrders = this.state.orders.length;
+                    const totalClients = DB.get('ks_users').length;
+                    
+                    html = `
+                        <h2>Дэшборд</h2>
+                        <div class="stats-cards">
+                            <div class="stat-card"><div>Доход</div><div class="stat-value">${totalRevenue} ₽</div></div>
+                            <div class="stat-card"><div>Заказы</div><div class="stat-value">${totalOrders}</div></div>
+                            <div class="stat-card"><div>Клиенты</div><div class="stat-value">${totalClients}</div></div>
+                        </div>
+                        <div class="charts-container">
+                            <div class="chart-box"><canvas id="chartRevenue"></canvas></div>
+                            <div class="chart-box"><canvas id="chartCategories"></canvas></div>
+                        </div>
+                    `;
+                    content.innerHTML = html;
+                    setTimeout(() => this.initCharts(), 100);
+
+                } else if (tab === 'orders') {
+                    html = `<h2>Заказы</h2><table><thead><tr><th>ID</th><th>Дата</th><th>Клиент</th><th>Сумма</th><th>Статус</th></tr></thead><tbody>`;
+                    this.state.orders.forEach(o => {
+                        html += `<tr><td>${o.id}</td><td>${new Date(o.date).toLocaleDateString()}</td><td>${o.customer.name}</td><td>${o.total} ₽</td><td>${o.status}</td></tr>`;
+                    });
+                    html += `</tbody></table>`;
+                    content.innerHTML = html;
+
+                } else if (tab === 'clients') {
+                    const users = DB.get('ks_users');
+                    html = `<h2>Клиенты</h2><table><thead><tr><th>Email</th><th>Имя</th><th>Телефон</th></tr></thead><tbody>`;
+                    users.forEach(u => {
+                        html += `<tr><td>${u.email}</td><td>${u.name || '-'}</td><td>${u.phone || '-'}</td></tr>`;
+                    });
+                    html += `</tbody></table>`;
+                    content.innerHTML = html;
+
+                } else if (tab === 'products') {
+                    html = `
+                        <h2>Управление товарами</h2>
+                        <div style="background:#f9f9f9; padding:1rem; margin-bottom:1rem; border-radius:5px;">
+                            <div class="form-group"><input id="new-p-name" placeholder="Название"></div>
+                            <div class="form-group"><input id="new-p-price" type="number" placeholder="Цена"></div>
+                            <div class="form-group">
+                                <select id="new-p-cat">
+                                    <option value="boys">Мальчики</option>
+                                    <option value="girls">Девочки</option>
+                                    <option value="infants">Младенцы</option>
+                                </select>
+                            </div>
+                            <button class="btn" onclick="app.addProduct()">Добавить товар</button>
+                        </div>
+                        <table><thead><tr><th>Название</th><th>Цена</th><th>Категория</th><th>Действие</th></tr></thead><tbody>
+                    `;
+                    this.state.products.forEach(p => {
+                        html += `<tr><td>${p.name}</td><td>${p.price}</td><td>${p.category}</td><td><button class="btn-danger" style="padding:2px 5px;" onclick="app.deleteProduct(${p.id})">X</button></td></tr>`;
+                    });
+                    html += `</tbody></table>`;
+                    content.innerHTML = html;
+
+                } else if (tab === 'finance') {
+                    const totalIncome = this.state.orders.reduce((sum, o) => sum + o.total, 0);
+                    const totalExpense = this.state.expenses.reduce((sum, e) => sum + e.amount, 0);
+                    const taxAmount = (totalIncome * (this.state.taxRate / 100));
+                    const profit = totalIncome - totalExpense - taxAmount;
+
+                    html = `
+                        <h2>Финансы</h2>
+                        <div class="stats-cards">
+                            <div class="stat-card" style="color:green"><div>Доход</div><div class="stat-value">${totalIncome} ₽</div></div>
+                            <div class="stat-card" style="color:red"><div>Расходы</div><div class="stat-value">${totalExpense} ₽</div></div>
+                            <div class="stat-card" style="color:orange"><div>Налог (${this.state.taxRate}%)</div><div class="stat-value">${taxAmount.toFixed(2)} ₽</div></div>
+                            <div class="stat-card" style="color:blue"><div>Чистая прибыль</div><div class="stat-value">${profit.toFixed(2)} ₽</div></div>
+                        </div>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
+                            <div>
+                                <h3>Добавить расход</h3>
+                                <div class="form-group"><input id="exp-name" placeholder="Название (Аренда, Закупка)"></div>
+                                <div class="form-group"><input id="exp-amount" type="number" placeholder="Сумма"></div>
+                                <button class="btn" onclick="app.addExpense()">Добавить</button>
+                            </div>
+                            <div>
+                                <h3>Настройка налога (%)</h3>
+                                <div class="form-group"><input id="tax-rate-input" type="number" value="${this.state.taxRate}"></div>
+                                <button class="btn" onclick="app.updateTax()">Обновить ставку</button>
+                            </div>
+                        </div>
+
+                        <h3>История расходов</h3>
+                        <table><thead><tr><th>Название</th><th>Сумма</th><th>Дата</th></tr></thead><tbody>
+                    `;
+                    this.state.expenses.forEach(e => {
+                        html += `<tr><td>${e.name}</td><td>${e.amount}</td><td>${new Date(e.date).toLocaleDateString()}</td></tr>`;
+                    });
+                    html += `</tbody></table>`;
+                    
+                    content.innerHTML = html;
+                    // Re-render finance chart if needed or just rely on dashboard
+                }
+            },
+
+            addProduct() {
+                const name = document.getElementById('new-p-name').value;
+                const price = Number(document.getElementById('new-p-price').value);
+                const cat = document.getElementById('new-p-cat').value;
+                if (!name || !price) return this.notify('Заполните данные', 'error');
+
+                const newP = { id: Date.now(), name, price, category: cat, image: 'fa-tag' };
+                this.state.products.push(newP);
+                DB.set('ks_products', this.state.products);
+                this.renderAdminTab('products');
+                this.notify('Товар добавлен');
+            },
+
+            deleteProduct(id) {
+                this.state.products = this.state.products.filter(p => p.id !== id);
+                DB.set('ks_products', this.state.products);
+                this.renderAdminTab('products');
+            },
+
+            addExpense() {
+                const name = document.getElementById('exp-name').value;
+                const amount = Number(document.getElementById('exp-amount').value);
+                if (!name || !amount) return this.notify('Заполните данные', 'error');
+
+                const exp = { id: Date.now(), name, amount, date: new Date().toISOString() };
+                this.state.expenses.push(exp);
+                DB.set('ks_expenses', this.state.expenses);
+                this.renderAdminTab('finance');
+                this.notify('Расход добавлен');
+            },
+
+            updateTax() {
+                const rate = Number(document.getElementById('tax-rate-input').value);
+                this.state.taxRate = rate;
+                DB.set('ks_taxRate', rate);
+                this.renderAdminTab('finance');
+                this.notify('Ставка налога обновлена');
+            },
+
+            initCharts() {
+                // Prepare Data for Revenue Chart (Last 7 days mock logic or just aggregate)
+                // For simplicity, aggregating by category for Pie, and Total vs Expense for Bar
+                
+                const ctxRev = document.getElementById('chartRevenue');
+                const ctxCat = document.getElementById('chartCategories');
+                
+                if (!ctxRev || !ctxCat) return;
+
+                // Destroy existing if any (simple hack: check variable, omitted for brevity in single file)
+                
+                // 1. Revenue vs Expenses
+                const totalInc = this.state.orders.reduce((s,o)=>s+o.total, 0);
+                const totalExp = this.state.expenses.reduce((s,e)=>s+e.amount, 0);
+                const tax = totalInc * (this.state.taxRate/100);
+                const net = totalInc - totalExp - tax;
+
+                new Chart(ctxRev, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Доход', 'Расходы', 'Налоги', 'Прибыль'],
+                        datasets: [{
+                            label: 'Финансы (₽)',
+                            data: [totalInc, totalExp, tax, net],
+                            backgroundColor: ['#4caf50', '#f44336', '#ff9800', '#2196f3']
+                        }]
+                    }
+                });
+
+                // 2. Sales by Category
+                const cats = { boys: 0, girls: 0, infants: 0 };
+                this.state.orders.forEach(o => {
+                    o.items.forEach(i => {
+                        if(cats[i.category] !== undefined) cats[i.category] += (i.price * i.qty);
+                    });
+                });
+
+                new Chart(ctxCat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Мальчики', 'Девочки', 'Младенцы'],
+                        datasets: [{
+                            data: [cats.boys, cats.girls, cats.infants],
+                            backgroundColor: ['#a18cd1', '#fecfef', '#ff9a9e']
+                        }]
+                    }
+                });
+            }
+        };
+
+        // Start App
+        app.init();
+    </script>
+</body>
+</html>
